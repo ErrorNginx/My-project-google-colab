@@ -1,0 +1,87 @@
+
+#Task 1
+
+Syntax for customer table
+
+```
+CREATE TABLE public.customer (
+customer_id integer NOT NULL,
+country varchar(30) NOT NULL,
+CONSTRAINT customer_pk PRIMARY KEY (customer_id)
+);
+```
+
+Syntax for product table
+
+```
+CREATE TABLE public.product (
+stock_code varchar(20) NOT NULL,
+description text NULL,
+CONSTRAINT product_pk PRIMARY KEY (stock_code)
+);
+```
+
+```
+CREATE TABLE public."transaction" (
+trx_id integer NOT NULL,
+invoice_no varchar(10) NOT NULL,
+stock_code varchar(20) NOT NULL,
+quantity integer NOT NULL,
+invoice_date timestamp NOT NULL,
+unit_price numeric(10,2) NOT NULL,
+customer_id integer,
+CONSTRAINT transaction_pk PRIMARY KEY (trx_id)
+);
+```
+
+
+
+Make SQL syntax for these statements :
+
+1. How many customers from Italy?
+2. List all country in customer table which name start by 'S' letter
+3. How many transaction during June 2011, which quantity more than 10?
+4. List top 5 transaction with highest price
+5. Show top 6-10 customer with highest transaction quantity
+6. Where do customer in point 5 stay?
+7. Select transaction total of every month during 2011
+8. How many product items which type is pencil?
+9. Which one is the most expensive pencil?
+10.Select top 5 country with highest amount transaction
+11.How many transaction quantity for each transaction of France in 2010? 
+12. What is the result of quantity multiplied by unit_price from each transaction of country which name start with 'S'? 
+13. What are countries which transaction quantity at least 7000?
+14. What is the best selling product in term of quantity?
+15. When is the first transaction of country which name start with United?
+
+
+1. select count(*) from customer where country = 'Italy'
+
+2. select distinct country from customer where country like 'S%'
+
+3. select count(*) from transaction where (invoice_date between '2011-06-01' and '2011-06-30') and quantity > 10
+
+4. select customer_id, (unit_price * quantity) as tot_trans from transaction order by tot_trans desc limit 5
+
+5. select customer.*, sum(transaction.quantity) as qty from transaction inner join customer on transaction.customer_id = customer.customer_id group by customer.customer_id order by qty desc limit 5 offset 5;
+
+6. select t1.*, c.country from (select customer_id, sum(quantity) sq from transaction group by customer_id order by sum(quantity) desc limit 5 offset 5) t1 join customer c on t1.customer_id = c.customer_id
+
+7. select date_trunc('month',invoice_date) as trans_date,sum(unit_price * quantity) from transaction where invoice_date between '2011-01-01' and '2011-12-31' group by date_trunc('month', invoice_date) order by trans_date asc;
+
+8. select count(*) from product where lower(description) like '%pencils%'
+
+9. select max(transaction.unit_price), product.stock_code, product.description from product inner join transaction on product.stock_code = transaction.stock_code where lower(description) like '%pencil%' group by product.stock_code
+
+10. select customer.country, sum(quantity * unit_price) as amt from customer join transaction on customer.customer_id = transaction.customer_id group by customer.country order by amt desc limit 5; 
+
+11. select sum(transaction.quantity) from transaction inner join customer on customer.customer_id = transaction.customer_id where customer.country = 'France'  and (invoice_date between '2010-01-01' and '2010-12-31')
+
+12. select customer.country, sum(transaction.quantity * transaction.unit_price) as total from transaction left join customer on transaction.customer_id = customer.customer_id where customer.country like 'S%' group by customer.country order by customer.country desc
+
+13. select customer.country, sum(transaction.quantity) as qty from transaction left join customer on transaction.customer_id = customer.customer_id group by customer.country having sum(transaction.quantity) >= 7000
+
+14. select product.description,sum(transaction.quantity) as max_qty from product inner join transaction on product.stock_code = transaction.stock_code group by product.stock_code order by max_qty desc limit 1;
+
+15. select * from transaction inner join customer on customer.customer_id = transaction.customer_id where customer.country like 'United%' order by transaction.invoice_date desc limit 1;
+
